@@ -1,0 +1,338 @@
+{
+  "config": {
+    "n_products": 20000,
+    "n_searches": 50000,
+    "n_judged": 600,
+    "seed": 7,
+    "pool_k": 100,
+    "folds": 5,
+    "classifier_holdout": 0.2
+  },
+  "ranker_backend": "sklearn",
+  "startup_seconds": 29.34,
+  "offline": {
+    "segments": {
+      "all": {
+        "queries": 561,
+        "bm25": {
+          "ndcg@10": 0.3485,
+          "mrr": 0.4057,
+          "recall@50": 0.3469
+        },
+        "bm25_qu": {
+          "ndcg@10": 0.8447,
+          "mrr": 0.9588,
+          "recall@50": 0.8275
+        },
+        "ltr": {
+          "ndcg@10": 0.9475,
+          "mrr": 0.9822,
+          "recall@50": 0.8385
+        }
+      },
+      "head": {
+        "queries": 65,
+        "bm25": {
+          "ndcg@10": 0.6826,
+          "mrr": 0.7544,
+          "recall@50": 0.7391
+        },
+        "bm25_qu": {
+          "ndcg@10": 0.8693,
+          "mrr": 0.958,
+          "recall@50": 0.9388
+        },
+        "ltr": {
+          "ndcg@10": 0.9762,
+          "mrr": 0.9846,
+          "recall@50": 0.9578
+        }
+      },
+      "torso": {
+        "queries": 175,
+        "bm25": {
+          "ndcg@10": 0.5193,
+          "mrr": 0.597,
+          "recall@50": 0.5293
+        },
+        "bm25_qu": {
+          "ndcg@10": 0.8719,
+          "mrr": 0.9701,
+          "recall@50": 0.8995
+        },
+        "ltr": {
+          "ndcg@10": 0.9786,
+          "mrr": 0.9829,
+          "recall@50": 0.9051
+        }
+      },
+      "tail": {
+        "queries": 186,
+        "bm25": {
+          "ndcg@10": 0.2986,
+          "mrr": 0.3676,
+          "recall@50": 0.2606
+        },
+        "bm25_qu": {
+          "ndcg@10": 0.8254,
+          "mrr": 0.9615,
+          "recall@50": 0.7183
+        },
+        "ltr": {
+          "ndcg@10": 0.915,
+          "mrr": 0.9785,
+          "recall@50": 0.7231
+        }
+      },
+      "typo": {
+        "queries": 135,
+        "bm25": {
+          "ndcg@10": 0.035,
+          "mrr": 0.0425,
+          "recall@50": 0.0407
+        },
+        "bm25_qu": {
+          "ndcg@10": 0.8239,
+          "mrr": 0.9409,
+          "recall@50": 0.8309
+        },
+        "ltr": {
+          "ndcg@10": 0.9381,
+          "mrr": 0.9852,
+          "recall@50": 0.8537
+        }
+      },
+      "attribute": {
+        "queries": 322,
+        "bm25": {
+          "ndcg@10": 0.3609,
+          "mrr": 0.4308,
+          "recall@50": 0.3518
+        },
+        "bm25_qu": {
+          "ndcg@10": 0.8455,
+          "mrr": 0.9651,
+          "recall@50": 0.8001
+        },
+        "ltr": {
+          "ndcg@10": 0.9414,
+          "mrr": 0.9814,
+          "recall@50": 0.8053
+        }
+      }
+    },
+    "traffic_weighted_ndcg@10": {
+      "bm25": 0.6825,
+      "bm25_qu": 0.8684,
+      "ltr": 0.9716
+    },
+    "evaluable_queries": 561,
+    "judged_queries": 600,
+    "no_relevant_products": 39,
+    "judgments": 49958,
+    "ci95_ndcg@10": {
+      "bm25_qu_minus_bm25": [
+        0.4596,
+        0.532
+      ],
+      "ltr_minus_bm25_qu": [
+        0.0942,
+        0.1117
+      ],
+      "ltr_minus_bm25": [
+        0.5625,
+        0.6335
+      ]
+    }
+  },
+  "zero_results": {
+    "bm25": {
+      "queries": 0.5717,
+      "traffic": 0.2162
+    },
+    "bm25_qu_before_fallback": {
+      "queries": 0.095,
+      "traffic": 0.0386
+    },
+    "bm25_qu_after_fallback": {
+      "queries": 0.025,
+      "traffic": 0.0298
+    },
+    "fallback_steps": {
+      "matched any term": 18,
+      "relaxed color": 18,
+      "relaxed waterproof": 16,
+      "relaxed price": 14,
+      "dropped category": 11,
+      "relaxed material": 11,
+      "relaxed brand": 11,
+      "relaxed gender": 9,
+      "relaxed size": 4,
+      "broadened category to Jackets": 2
+    }
+  },
+  "clicks": {
+    "by_label_source": {
+      "judgments": {
+        "ndcg@10": 0.9475,
+        "mrr": 0.9822
+      },
+      "clicks_raw": {
+        "ndcg@10": 0.9056,
+        "mrr": 0.9736
+      },
+      "clicks_pbm": {
+        "ndcg@10": 0.9242,
+        "mrr": 0.9721
+      }
+    },
+    "sessions": 24196,
+    "impressions": 233573,
+    "clicks": 54599,
+    "labeled_pairs": 5547,
+    "examination_true": [
+      1.0,
+      0.536,
+      0.372,
+      0.287,
+      0.235,
+      0.199,
+      0.174,
+      0.154,
+      0.138,
+      0.126
+    ],
+    "examination_estimated": [
+      1.0,
+      0.602,
+      0.454,
+      0.379,
+      0.315,
+      0.271,
+      0.243,
+      0.208,
+      0.189,
+      0.16
+    ]
+  },
+  "margin_tradeoff": [
+    {
+      "lambda": 0.0,
+      "ndcg@10": 0.9475,
+      "top10_margin": 0.3898
+    },
+    {
+      "lambda": 0.1,
+      "ndcg@10": 0.9475,
+      "top10_margin": 0.4713
+    },
+    {
+      "lambda": 0.25,
+      "ndcg@10": 0.9467,
+      "top10_margin": 0.4736
+    },
+    {
+      "lambda": 0.5,
+      "ndcg@10": 0.9452,
+      "top10_margin": 0.4746
+    },
+    {
+      "lambda": 1.0,
+      "ndcg@10": 0.9399,
+      "top10_margin": 0.4761
+    }
+  ],
+  "understanding": {
+    "sample_queries": 2336,
+    "spelling": {
+      "typo_queries": 608,
+      "corrected": 0.975,
+      "clean_queries": 1728,
+      "false_corrections": 0.0
+    },
+    "attributes": {
+      "gender": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 457
+      },
+      "color": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 704
+      },
+      "size": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 288
+      },
+      "material": {
+        "precision": 0.936,
+        "recall": 0.724,
+        "support": 550
+      },
+      "waterproof_min": {
+        "precision": 1.0,
+        "recall": 0.98,
+        "support": 349
+      },
+      "price_min": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 195
+      },
+      "price_max": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 673
+      },
+      "brand": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 683
+      }
+    },
+    "attributes_exact_match": 0.908,
+    "synonyms": {
+      "leaf_queries": 1452,
+      "catalog_noun_covered_with": 0.742,
+      "catalog_noun_covered_without": 0.536
+    },
+    "category": {
+      "top1_accuracy": 1.0,
+      "queries": 1452,
+      "filter_rate": 0.24,
+      "filter_precision": 1.0
+    }
+  },
+  "interleaving": [
+    {
+      "a": "bm25_qu",
+      "b": "ltr",
+      "impressions_simulated": 20000,
+      "b_wins": 0.2782,
+      "a_wins": 0.2374,
+      "ties": 0.4844,
+      "preference": 0.0408,
+      "p_value": 8.881784197001252e-16,
+      "ab_clicks_per_search": [
+        0.8583,
+        0.8967
+      ],
+      "ab_click_rate": [
+        0.6212,
+        0.6422
+      ],
+      "sample_size_interleaving": 2430,
+      "sample_size_ab_clicks": 16793,
+      "sample_size_ab_click_rate": 16635,
+      "ab_to_interleaving_ratio": 6.8,
+      "empirical_power_at_interleaving_size": 0.807
+    }
+  ],
+  "gate": {
+    "ltr_ndcg@10": 0.9475,
+    "bm25_ndcg@10": 0.3485,
+    "passed": true
+  }
+}

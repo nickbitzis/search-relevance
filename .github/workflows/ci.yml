@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Lint
+        run: uvx ruff check .
+      - name: Test
+        run: uv run --python 3.12 --group dev pytest -q
+
+  relevance-gate:
+    # Full size run: 20,000 products, 50,000 searches, 600 judged queries. Fails the build if the full pipeline's
+    # NDCG@10 drops below BM25 only on the judged set.
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Full pipeline NDCG@10 must beat BM25 only
+        run: uv run --python 3.12 searchrel eval --gate --out eval-out --interleave-n 8000 | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evaluation
+          path: eval-out/evaluation.json
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t search-relevance:ci .
+      - name: Smoke test the container
+        run: |
+          docker run -d --name sr -p 8846:8846 -e SEARCHREL_PRODUCTS=3000 -e SEARCHREL_SEARCHES=8000 \
+            -e SEARCHREL_JUDGED=100 search-relevance:ci
+          for i in $(seq 1 120); do curl -sf localhost:8846/healthz && break; sleep 2; done
+          curl -sf localhost:8846/healthz
+          curl -sf "localhost:8846/api/search?q=rain%20jacket&limit=3" | grep -q results
+          curl -sf "localhost:8846/api/debug?q=tnet&top=3" | grep -q fallback_steps
+          curl -sf localhost:8846/metrics | grep searchrel_requests_total
+          docker logs sr | tail -5
+          docker rm -f sr

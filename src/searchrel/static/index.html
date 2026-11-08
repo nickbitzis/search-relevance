@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>search-relevance</title>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --text: #1c2330; --muted: #5d6878; --border: #dde2e9;
+  --track: #e8ebf0; --accent: #2f6fdb; --accent-soft: #e6eefc; --good: #11804f; --good-soft: #e3f5ec;
+  --warn: #8a5a00; --warn-soft: #fff4dc; --bad: #b42318; --bad-soft: #fde8e6;
+  --s1: #9aa5b5; --s2: #5b8def; --s3: #11804f;
+  --radius: 10px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11151c; --panel: #181e27; --text: #e6eaf0; --muted: #9aa5b5; --border: #2a3340;
+    --track: #232b37; --accent: #6c9cf0; --accent-soft: #1c2a44; --good: #4ccb8f; --good-soft: #15302a;
+    --warn: #f3c46b; --warn-soft: #3a2e14; --bad: #ff8a7a; --bad-soft: #3b1d1b;
+    --s1: #5d6878; --s2: #6c9cf0; --s3: #4ccb8f; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { overflow-x: hidden; }
+body { margin: 0; background: var(--bg); color: var(--text); font-size: 14px; }
+header { padding: 16px 24px 4px; display: flex; align-items: baseline; gap: 6px 16px; flex-wrap: wrap; }
+h1 { font-size: 20px; margin: 0; }
+h2 { font-size: 13px; margin: 0 0 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+h3 { font-size: 14px; margin: 16px 0 8px; }
+.muted { color: var(--muted); }
+nav { display: flex; gap: 6px; padding: 8px 24px; flex-wrap: wrap; }
+nav button { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px 12px; cursor: pointer; font: inherit; }
+nav button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+main { padding: 8px 24px 24px; }
+.view { display: none; gap: 16px; grid-template-columns: 250px minmax(0, 1fr); }
+.view.on { display: grid; }
+.view.wide { grid-template-columns: minmax(0, 1fr); }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; min-width: 0; }
+label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+input, select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); color: var(--text); font: inherit; min-width: 0; }
+.searchbar { display: flex; gap: 8px; }
+.searchbar input { flex: 1; font-size: 15px; }
+.searchbar select { width: auto; }
+button.primary { padding: 8px 14px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--track); color: var(--muted); white-space: nowrap; border: 0; font-family: inherit; }
+button.chip { cursor: pointer; }
+.chip.on, .chip.acc { background: var(--accent-soft); color: var(--accent); }
+.chip.good { background: var(--good-soft); color: var(--good); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+.facet { margin-bottom: 12px; }
+.facet button { display: flex; justify-content: space-between; width: 100%; background: transparent; border: 0; color: var(--text); padding: 3px 4px; border-radius: 5px; cursor: pointer; font: inherit; font-size: 13px; text-align: left; gap: 8px; }
+.facet button:hover { background: var(--track); }
+.facet button.on { background: var(--accent-soft); color: var(--accent); }
+.facet button span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
+.note { padding: 8px 10px; border-radius: 8px; margin: 10px 0 0; font-size: 13px; }
+.note.warn { background: var(--warn-soft); color: var(--warn); }
+.note.acc { background: var(--accent-soft); color: var(--accent); }
+.note a { color: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin-top: 12px; }
+.card { border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; background: var(--panel); min-width: 0; }
+.card .title { font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.card .meta { font-size: 12px; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
+.card .price { font-size: 15px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--border); vertical-align: -1px; margin-right: 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; border-top: 0; white-space: nowrap; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.sel td { background: var(--accent-soft); }
+tbody tr { cursor: pointer; }
+.scroll { overflow-x: auto; max-width: 100%; }
+.kv { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 4px 10px; font-size: 13px; }
+.kv > div:nth-child(odd) { color: var(--muted); }
+.kv > div { overflow-wrap: anywhere; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 4px 0 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+svg text { fill: var(--muted); font-size: 11px; }
+.big { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 8px; }
+.stat > div { min-width: 120px; }
+@media (max-width: 800px) {
+  header, nav, main { padding-left: 16px; padding-right: 16px; }
+  .view, .view.wide { grid-template-columns: minmax(0, 1fr); }
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .searchbar { flex-wrap: wrap; }
+  .searchbar input { flex-basis: 100%; }
+  .kv { grid-template-columns: 100px minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>search-relevance</h1>
+  <span class="muted">Product search for Tamarack Row Outfitters, a made-up outdoor gear retailer, measured end to end</span>
+</header>
+<nav>
+  <button data-view="search" class="on">Search</button>
+  <button data-view="debug">Query debugger</button>
+  <button data-view="eval">Evaluation</button>
+</nav>
+<main>
+  <section id="view-search" class="view on">
+    <aside class="panel" id="facets"><h2>Facets</h2><div class="muted">Search to see facets.</div></aside>
+    <div class="panel">
+      <form class="searchbar" id="sform">
+        <input id="q" placeholder="Try: mens blue waterproof jacket under 200" autocomplete="off">
+        <select id="ranker" aria-label="Ranker">
+          <option value="ltr">Full pipeline (LTR)</option>
+          <option value="bm25_qu">BM25 + query understanding</option>
+          <option value="bm25">BM25 only</option>
+        </select>
+        <button class="primary">Search</button>
+      </form>
+      <div class="chips" id="examples"></div>
+      <div id="notes"></div>
+      <div class="chips" id="parsed"></div>
+      <div class="muted" id="count" style="margin-top:8px"></div>
+      <div class="cards" id="results"></div>
+    </div>
+  </section>
+
+  <section id="view-debug" class="view">
+    <aside class="panel">
+      <h2>Query</h2>
+      <div class="muted" style="font-size:12px">Judged queries where LTR moved NDCG@10 the most:</div>
+      <div class="chips" id="judgedex"></div>
+      <form id="dform"><input id="dq" placeholder="any query"><button class="primary" style="margin-top:10px;width:100%">Debug</button></form>
+      <div id="parse" style="margin-top:14px"></div>
+    </aside>
+    <div class="panel">
+      <h2>Candidates and final ranking</h2>
+      <div class="muted" id="dsummary"></div>
+      <div class="scroll"><table id="dtable"></table></div>
+      <div id="dfeat"></div>
+    </div>
+  </section>
+
+  <section id="view-eval" class="view wide">
+    <div class="panel">
+      <h2>Offline evaluation on the judged set</h2>
+      <div class="chips" id="metricpick"></div>
+      <div class="legend" id="legend"></div>
+      <div id="chart"></div>
+      <div class="muted" id="evalnote"></div>
+    </div>
+    <div class="grid2" id="evalgrid"></div>
+  </section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const pct = (x) => (x * 100).toFixed(1) + "%";
+const SWATCH = { black: "#222", blue: "#2f6fdb", gray: "#8a929e", green: "#2e8b57", red: "#c0392b", orange: "#e67e22",
+  navy: "#1f2f5c", brown: "#7b5134", white: "#f4f4f4", yellow: "#e9c43b", purple: "#7d4bb3", pink: "#e58fb5" };
+const SYS = { bm25: "BM25 only", bm25_qu: "BM25 + query understanding", ltr: "+ learning to rank" };
+let state = { q: "", ranker: "ltr", filters: {} };
+
+document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
+function show(v) {
+  document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.view === v));
+  document.querySelectorAll(".view").forEach((s) => s.classList.toggle("on", s.id === "view-" + v));
+  if (v === "eval") loadEval();
+}
+
+async function api(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+  return r.json();
+}
+
+async function runSearch() {
+  const p = new URLSearchParams({ q: state.q, ranker: state.ranker, limit: 24 });
+  for (const [k, v] of Object.entries(state.filters)) p.set(k, v);
+  const r = await api("/api/search?" + p);
+  renderFacets(r.facets);
+  const notes = [];
+  if (r.spelling.showing_results_for) notes.push(`<div class="note acc">Showing results for <b>${esc(r.spelling.showing_results_for)}</b></div>`);
+  if (r.spelling.did_you_mean) notes.push(`<div class="note acc">Did you mean <a data-q="${esc(r.spelling.did_you_mean)}">${esc(r.spelling.did_you_mean)}</a>?</div>`);
+  if (r.fallback.length) notes.push(`<div class="note warn">No exact matches, so the search ${esc(r.fallback.join(", then "))}.</div>`);
+  $("#notes").innerHTML = notes.join("");
+  $("#notes").querySelectorAll("a[data-q]").forEach((a) => a.addEventListener("click", () => { $("#q").value = a.dataset.q; state.q = a.dataset.q; runSearch(); }));
+  const chips = [];
+  for (const [k, v] of Object.entries(r.filters)) chips.push(`<span class="chip acc">${esc(k.replace("_", " "))}: ${esc(v)}</span>`);
+  if (r.category_filter) chips.push(`<span class="chip good">category: ${esc(r.category_filter[1])}</span>`);
+  for (const s of r.parse.synonyms) chips.push(`<span class="chip">${esc(s.phrase)} + ${esc(s.adds)}</span>`);
+  $("#parsed").innerHTML = chips.join("");
+  $("#count").textContent = `${r.total.toLocaleString()} matching products, top ${r.results.length} shown`;
+  $("#results").innerHTML = r.results.map((x) => `<div class="card">
+    <div class="title">${esc(x.title)}</div>
+    <div class="meta">${esc(x.category)}</div>
+    <div class="meta"><span class="swatch" style="background:${SWATCH[x.color] || "#999"}"></span>${esc(x.color)} · ${esc(x.material)}${x.waterproof_mm ? " · " + x.waterproof_mm + " mm" : ""}${x.sizes.length ? " · " + esc(x.sizes.join(" ")) : ""}</div>
+    <div class="price">$${x.price.toFixed(2)}</div>
+    <div class="meta">${x.rating.toFixed(1)} stars (${x.reviews}) · ${x.in_stock ? "in stock" : '<span style="color:var(--bad)">out of stock</span>'} · BM25 #${x.bm25_rank}</div>
+  </div>`).join("") || '<div class="muted">No results.</div>';
+}
+
+function renderFacets(f) {
+  const sec = (name, key, items, label) => `<div class="facet"><h2>${name}</h2>${items.map((it) => {
+    const on = state.filters[key] === it.value;
+    return `<button data-k="${key}" data-v="${esc(it.value)}" class="${on ? "on" : ""}"><span>${esc(label ? label(it) : it.value)}</span><span>${it.count}</span></button>`;
+  }).join("")}</div>`;
+  const price = `<div class="facet"><h2>Price</h2>${f.price.filter((b) => b.count).map((b) => {
+    const on = state.filters.price_max == b.max && (state.filters.price_min ?? 0) == b.min;
+    return `<button data-pmin="${b.min}" data-pmax="${b.max}" class="${on ? "on" : ""}"><span>$${b.value}</span><span>${b.count}</span></button>`;
+  }).join("")}</div>`;
+  $("#facets").innerHTML = sec("Category", "category", f.category, (i) => i.label) + sec("Brand", "brand", f.brand) +
+    sec("Color", "color", f.color) + sec("Gender", "gender", f.gender) + price;
+  $("#facets").querySelectorAll("button[data-k]").forEach((b) => b.addEventListener("click", () => {
+    if (state.filters[b.dataset.k] === b.dataset.v) delete state.filters[b.dataset.k]; else state.filters[b.dataset.k] = b.dataset.v;
+    runSearch();
+  }));
+  $("#facets").querySelectorAll("button[data-pmin]").forEach((b) => b.addEventListener("click", () => {
+    if (state.filters.price_max == b.dataset.pmax) { delete state.filters.price_max; delete state.filters.price_min; }
+    else { state.filters.price_min = b.dataset.pmin; state.filters.price_max = b.dataset.pmax; }
+    runSearch();
+  }));
+}
+
+$("#sform").addEventListener("submit", (e) => { e.preventDefault(); state.q = $("#q").value; state.filters = {}; runSearch(); });
+$("#ranker").addEventListener("change", () => { state.ranker = $("#ranker").value; runSearch(); });
+
+async function runDebug(q) {
+  const d = await api("/api/debug?" + new URLSearchParams({ q, top: 20 }));
+  const p = d.parse;
+  const kv = [
+    ["normalized", p.normalized],
+    ["spelling", p.corrections.map((c) => `${c.from} → ${c.to}${c.applied ? "" : " (suggested)"}`).join(", ") || "none"],
+    ["synonyms", p.synonyms.map((s) => `${s.phrase} + ${s.adds}`).join(", ") || "none"],
+    ["attributes", p.attributes.map((a) => `${a.slot}: ${a.text}`).join(", ") || "none"],
+    ["text concepts", p.concepts.map((c) => c.alternatives.join(" | ")).join(", ") || "none"],
+    ["category", p.category.top.map((t) => `${t.leaf} ${(t.p * 100).toFixed(0)}%`).join(", ") || "none"],
+    ["category filter", d.category_filter ? d.category_filter.join(": ") : "none"],
+    ["filters applied", Object.entries(d.filters_applied).map(([k, v]) => `${k}=${v}`).join(", ") || "none"],
+    ["fallback", d.fallback_steps.join(" → ") || "not needed"],
+  ];
+  $("#parse").innerHTML = `<div class="kv">${kv.map(([k, v]) => `<div>${esc(k)}</div><div>${esc(v)}</div>`).join("")}</div>`;
+  let summary = `${d.candidates.toLocaleString()} candidates, top ${d.reranked} reranked by ${esc(d.ranker.backend)} in ${d.ms} ms.`;
+  if (d.judged) {
+    const m = d.judged.metrics;
+    summary += ` Judged query (${d.judged.segment}${d.judged.typo ? ", typo" : ""}, ${d.judged.n_relevant} relevant). NDCG@10: BM25 ${m.bm25["ndcg@10"].toFixed(3)}, +QU ${m.bm25_qu["ndcg@10"].toFixed(3)}, +LTR ${m.ltr["ndcg@10"].toFixed(3)} (cross-validated).`;
+  }
+  $("#dsummary").textContent = summary;
+  const hasGrade = d.results.some((r) => "grade" in r);
+  $("#dtable").innerHTML = `<thead><tr><th class="num">Rank</th><th class="num">BM25 rank</th>${hasGrade ? '<th class="num">Grade</th>' : ""}<th>Product</th><th class="num">LTR</th><th>Top reasons</th></tr></thead><tbody>` +
+    d.results.map((r, i) => `<tr data-i="${i}"><td class="num">${r.rank}</td><td class="num">${r.bm25_rank}</td>${hasGrade ? `<td class="num"><span class="chip ${r.grade >= 3 ? "good" : r.grade == 2 ? "acc" : r.grade == 1 ? "warn" : "bad"}">${r.grade}</span></td>` : ""}
+      <td style="min-width:200px">${esc(r.title)}<div class="muted" style="font-size:12px">${esc(r.category)} · $${r.price}</div></td>
+      <td class="num">${r.ltr_score.toFixed(3)}</td>
+      <td style="min-width:220px">${(r.why || []).map((w) => `<span class="chip ${w.contribution >= 0 ? "good" : "bad"}">${esc(w.feature)} ${w.contribution >= 0 ? "+" : ""}${w.contribution.toFixed(2)}</span>`).join(" ")}</td></tr>`).join("") + "</tbody>";
+  const rows = $("#dtable").querySelectorAll("tbody tr");
+  const pick = (i) => {
+    rows.forEach((tr) => tr.classList.toggle("sel", tr.dataset.i == i));
+    const r = d.results[i];
+    $("#dfeat").innerHTML = `<h3>Features: ${esc(r.title)}</h3><div class="kv">${Object.entries(r.features).map(([k, v]) => `<div>${esc(k)}</div><div>${v}</div>`).join("")}</div>`;
+  };
+  rows.forEach((tr) => tr.addEventListener("click", () => pick(tr.dataset.i)));
+  if (d.results.length) pick(0); else $("#dfeat").innerHTML = "";
+}
+$("#dform").addEventListener("submit", (e) => { e.preventDefault(); runDebug($("#dq").value); });
+
+let evalData = null, metric = "ndcg@10";
+async function loadEval() {
+  if (!evalData) { $("#evalnote").textContent = "Loading evaluation..."; evalData = await api("/api/eval"); }
+  renderEval();
+}
+function renderEval() {
+  const e = evalData, seg = e.offline.segments, segs = ["all", "head", "torso", "tail", "typo", "attribute"];
+  $("#metricpick").innerHTML = ["ndcg@10", "mrr", "recall@50"].map((m) => `<button class="chip ${m === metric ? "on" : ""}" data-m="${m}">${m.toUpperCase()}</button>`).join("");
+  $("#metricpick").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { metric = b.dataset.m; renderEval(); }));
+  const sys = ["bm25", "bm25_qu", "ltr"], col = ["var(--s1)", "var(--s2)", "var(--s3)"];
+  $("#legend").innerHTML = sys.map((s, i) => `<span><i style="background:${col[i]}"></i>${SYS[s]}</span>`).join("");
+  const W = 760, H = 260, L = 34, B = 34, T = 10, gw = (W - L) / segs.length, bw = Math.min(26, (gw - 16) / 3);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${metric} by segment">`;
+  for (let t = 0; t <= 1.0001; t += 0.25) {
+    const y = T + (H - T - B) * (1 - t);
+    svg += `<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--border)"/><text x="${L - 6}" y="${y + 4}" text-anchor="end">${t.toFixed(2)}</text>`;
+  }
+  segs.forEach((s, gi) => {
+    const x0 = L + gi * gw + (gw - 3 * bw - 8) / 2;
+    sys.forEach((k, si) => {
+      const v = seg[s][k][metric] ?? 0, h = (H - T - B) * v, x = x0 + si * (bw + 4);
+      svg += `<rect x="${x}" y="${T + (H - T - B) - h}" width="${bw}" height="${h}" rx="2" fill="${col[si]}"><title>${SYS[k]}, ${s}: ${v.toFixed(3)}</title></rect>`;
+      svg += `<text x="${x + bw / 2}" y="${T + (H - T - B) - h - 4}" text-anchor="middle" style="font-size:9px">${v.toFixed(2)}</text>`;
+    });
+    svg += `<text x="${L + gi * gw + gw / 2}" y="${H - B + 16}" text-anchor="middle">${s}</text><text x="${L + gi * gw + gw / 2}" y="${H - B + 29}" text-anchor="middle" style="font-size:10px">${seg[s].queries} q</text>`;
+  });
+  $("#chart").innerHTML = svg + "</svg>";
+  const ci = e.offline.ci95_ndcg_10 || e.offline["ci95_ndcg@10"];
+  $("#evalnote").textContent = `${e.offline.evaluable_queries} judged queries with at least one relevant product (${e.offline.judgments.toLocaleString()} pooled judgments). LTR scores are 5-fold cross-validated by query. Ranker: ${e.ranker_backend}. LTR minus BM25 NDCG@10 95% CI: ${ci.ltr_minus_bm25.join(" to ")}.`;
+  const z = e.zero_results, c = e.clicks, u = e.understanding;
+  const box = (title, body) => `<div class="panel"><h2>${title}</h2>${body}</div>`;
+  const tbl = (head, rows) => `<div class="scroll"><table><thead><tr>${head.map((h, i) => `<th class="${i ? "num" : ""}">${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v, i) => `<td class="${i ? "num" : ""}">${v}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const il = e.interleaving.map((r) => `<h3>${esc(r.a)} vs ${esc(r.b)}</h3><div class="stat">
+      <div><div class="big">${r.sample_size_interleaving?.toLocaleString() ?? "n/a"}</div><div class="muted">impressions with interleaving</div></div>
+      <div><div class="big">${Math.min(r.sample_size_ab_clicks ?? Infinity, r.sample_size_ab_click_rate ?? Infinity).toLocaleString()}</div><div class="muted">sessions with an A/B test</div></div>
+      <div><div class="big">${r.ab_to_interleaving_ratio ?? "n/a"}x</div><div class="muted">less traffic</div></div></div>
+      <div class="muted">B wins ${pct(r.b_wins)}, A wins ${pct(r.a_wins)}, ties ${pct(r.ties)}. Empirical power at that size: ${r.empirical_power_at_interleaving_size == null ? "n/a" : pct(r.empirical_power_at_interleaving_size)}.</div>`).join("");
+  $("#evalgrid").innerHTML =
+    box("Online test: team-draft interleaving", il + `<div class="muted" style="margin-top:8px">Both at 80% power, alpha 0.05, clicks simulated with the position-based model.</div>`) +
+    box("Zero results", tbl(["System", "Queries", "Traffic"], [
+      ["BM25 only", pct(z.bm25.queries), pct(z.bm25.traffic)],
+      ["BM25 + QU, before fallback", pct(z.bm25_qu_before_fallback.queries), pct(z.bm25_qu_before_fallback.traffic)],
+      ["BM25 + QU, after fallback", pct(z.bm25_qu_after_fallback.queries), pct(z.bm25_qu_after_fallback.traffic)]]) +
+      `<div class="chips" style="margin-top:8px">${Object.entries(z.fallback_steps).map(([k, v]) => `<span class="chip">${esc(k)}: ${v}</span>`).join("")}</div>`) +
+    box("Clicks as training labels", tbl(["LTR trained on", "NDCG@10", "MRR"], [
+      ["Judgments", c.by_label_source.judgments["ndcg@10"].toFixed(3), c.by_label_source.judgments.mrr.toFixed(3)],
+      ["Raw clicks (CTR)", c.by_label_source.clicks_raw["ndcg@10"].toFixed(3), c.by_label_source.clicks_raw.mrr.toFixed(3)],
+      ["Clicks debiased (PBM)", c.by_label_source.clicks_pbm["ndcg@10"].toFixed(3), c.by_label_source.clicks_pbm.mrr.toFixed(3)]]) +
+      `<h3>Examination by rank: true vs estimated</h3>` + tbl(["Rank", "True", "PBM"], c.examination_true.map((t, i) => [i + 1, t.toFixed(2), c.examination_estimated[i].toFixed(2)]))) +
+    box("Query understanding (held-out log sample)", tbl(["Step", "Result"], [
+      ["Spelling: typo queries fixed", pct(u.spelling.corrected)],
+      ["Spelling: clean queries changed", pct(u.spelling.false_corrections)],
+      ["Synonyms: catalog noun reached, with table", pct(u.synonyms.catalog_noun_covered_with)],
+      ["Synonyms: without table", pct(u.synonyms.catalog_noun_covered_without)],
+      ["Category: top-1 leaf accuracy", pct(u.category.top1_accuracy)],
+      ["Category: filter precision", pct(u.category.filter_precision)],
+      ["Attributes: every slot exact", pct(u.attributes_exact_match)]]) +
+      tbl(["Attribute", "Precision", "Recall", "Support"], Object.entries(u.attributes).map(([k, v]) => [k.replace("_", " "), v.precision == null ? "-" : pct(v.precision), v.recall == null ? "-" : pct(v.recall), v.support]))) +
+    box("Margin as a business signal", tbl(["Blend weight", "NDCG@10", "Top 10 margin"], e.margin_tradeoff.map((m) => [m.lambda, m["ndcg@10"].toFixed(3), pct(m.top10_margin)])));
+}
+
+api("/api/examples").then((ex) => {
+  $("#examples").innerHTML = ex.examples.map((q) => `<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join("");
+  $("#examples").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+    $("#q").value = b.dataset.q; state.q = b.dataset.q; state.filters = {}; runSearch();
+    $("#dq").value = b.dataset.q;
+  }));
+  $("#judgedex").innerHTML = ex.judged.map((j) => `<button class="chip" data-q="${esc(j.query)}">${esc(j.query)}</button>`).join("");
+  $("#judgedex").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { $("#dq").value = b.dataset.q; runDebug(b.dataset.q); }));
+  const params = new URLSearchParams(location.search);
+  const q = params.get("q") || ex.examples[0];
+  $("#q").value = q; $("#dq").value = q; state.q = q;
+  runSearch();
+  runDebug(q);
+  if (params.get("view")) show(params.get("view"));
+});
+</script>
+</body>
+</html>
